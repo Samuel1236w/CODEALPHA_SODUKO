@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <cstring> // For memcpy
 using namespace std;
 
 // Define the size of the Sudoku grid
@@ -43,7 +44,6 @@ bool isSafe(int grid[GRID_SIZE][GRID_SIZE], int row, int col, int num) {
         }
     }
 
-    // If no conflicts, the number is safe to place
     return true;
 }
 
@@ -52,7 +52,6 @@ bool solveSudoku(int grid[GRID_SIZE][GRID_SIZE]) {
     int row, col;
     bool isEmpty = false;
 
-    // Find the next empty cell
     for (row = 0; row < GRID_SIZE; row++) {
         for (col = 0; col < GRID_SIZE; col++) {
             if (grid[row][col] == 0) {
@@ -63,47 +62,36 @@ bool solveSudoku(int grid[GRID_SIZE][GRID_SIZE]) {
         if (isEmpty) break;
     }
 
-    // If there are no empty cells, the Sudoku is solved
     if (!isEmpty) return true;
 
-    // Try placing digits 1-9 in the empty cell
     for (int num = 1; num <= 9; num++) {
         if (isSafe(grid, row, col, num)) {
-            // Place the number in the cell
             grid[row][col] = num;
 
-            // Recursively attempt to solve the rest of the grid
             if (solveSudoku(grid)) {
                 return true;
             }
 
-            // If placing the number doesn't lead to a solution, backtrack
             grid[row][col] = 0;
         }
     }
 
-    // If no number can be placed, return false
     return false;
 }
 
-// Function to remove cells from a fully solved Sudoku to set difficulty levels
-void setDifficulty(int grid[GRID_SIZE][GRID_SIZE], string difficulty) {
-    int removeCount;
-    if (difficulty == "easy") {
-        removeCount = 20; // Fewer cells removed
-    } else if (difficulty == "medium") {
-        removeCount = 40; // Moderate number of cells removed
-    } else if (difficulty == "hard") {
-        removeCount = 55; // More cells removed
-    } else {
-        cout << "Invalid difficulty level. Defaulting to 'medium'." << endl;
-        removeCount = 40;
-    }
-
+// Function to remove cells from a solved Sudoku grid based on difficulty level
+void setDifficulty(int grid[GRID_SIZE][GRID_SIZE], int removeCount) {
     srand(time(0)); // Seed random number generator
     for (int i = 0; i < removeCount; i++) {
         int row = rand() % GRID_SIZE;
         int col = rand() % GRID_SIZE;
+
+        // Ensure that the cell being removed is not already empty
+        while (grid[row][col] == 0) {
+            row = rand() % GRID_SIZE;
+            col = rand() % GRID_SIZE;
+        }
+
         grid[row][col] = 0; // Set cell to empty (0)
     }
 }
@@ -124,16 +112,31 @@ int main() {
     };
 
     // Ask user for difficulty level
-    string difficulty;
-    cout << "Enter difficulty level (easy, medium, hard): ";
-    cin >> difficulty;
+    int choice;
+    cout << "Select difficulty level:\n";
+    cout << "1. Easy\n2. Medium\n3. Hard\n";
+    cout << "Enter your choice (1-3): ";
+    cin >> choice;
 
-    // Prepare the grid based on difficulty level
+    // Determine the number of cells to remove based on the difficulty level
+    int removeCount;
+    if (choice == 1) {
+        removeCount = 20; // Easy: Remove 20 cells
+    } else if (choice == 2) {
+        removeCount = 40; // Medium: Remove 40 cells
+    } else if (choice == 3) {
+        removeCount = 55; // Hard: Remove 55 cells
+    } else {
+        cout << "Invalid choice! Defaulting to Easy level." << endl;
+        removeCount = 20; // Default to Easy level
+    }
+
+    // Prepare the grid based on the selected difficulty
     int grid[GRID_SIZE][GRID_SIZE];
     memcpy(grid, solvedGrid, sizeof(grid)); // Copy solved grid to working grid
-    setDifficulty(grid, difficulty);
+    setDifficulty(grid, removeCount);
 
-    cout << "Sudoku Puzzle (" << difficulty << " level):" << endl;
+    cout << "\nSudoku Puzzle (" << (choice == 1 ? "Easy" : choice == 2 ? "Medium" : "Hard") << " level):" << endl;
     printGrid(grid);
 
     // Solve the puzzle and display the solution
